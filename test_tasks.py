@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from tasks import PRIORITY_HIGH, TaskBoard
 
 
@@ -23,3 +25,18 @@ def test_add_rejects_blank_title():
     except ValueError:
         return
     raise AssertionError("expected ValueError for blank title")
+
+
+def test_overdue_ignores_completed():
+    board = TaskBoard()
+    task = board.add("old task")
+    task.created_at = datetime.now() - timedelta(days=30)
+    board.complete("old task")
+    assert board.overdue() == []
+
+
+def test_add_bulk_collects_errors():
+    board = TaskBoard()
+    errors = board.add_bulk(["ok task", "   "])
+    assert errors == ["title must not be empty"]
+    assert board.stats()["total"] == 1

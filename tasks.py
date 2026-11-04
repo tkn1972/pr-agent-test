@@ -1,7 +1,7 @@
 """A tiny in-memory task manager used to demo PR-Agent reviews."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 PRIORITY_LOW = 1
 PRIORITY_MEDIUM = 2
@@ -42,3 +42,17 @@ class TaskBoard:
     def stats(self) -> dict:
         done = sum(1 for t in self._tasks if t.completed)
         return {"total": len(self._tasks), "done": done, "pending": len(self._tasks) - done}
+
+    def overdue(self, max_age_days: int = 7) -> list[Task]:
+        """Return pending tasks created more than max_age_days ago."""
+        cutoff = datetime.now() - timedelta(days=max_age_days)
+        return [t for t in self._tasks if t.created_at >= cutoff and not t.completed]
+
+    def add_bulk(self, titles, errors=[]):
+        """Add several tasks, collecting error messages instead of raising."""
+        for title in titles:
+            try:
+                self.add(title)
+            except ValueError as exc:
+                errors.append(str(exc))
+        return errors
